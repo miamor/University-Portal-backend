@@ -52,6 +52,7 @@ module.exports = function(db) {
                     if (!items[i].content) items[i].content = '';
                     data[items[i].link] = items[i];
                 }
+                //console.log(data);
                 res.send(data);
             });
         });

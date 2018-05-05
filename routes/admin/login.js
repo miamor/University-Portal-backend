@@ -9,7 +9,7 @@ module.exports = function(db) {
         db.collection('users', function(err, collection) {
             collection.findOne(users, function(err, user) {
                 if (err) {
-                    res.send({'error':'An error has occurred'});
+                    res.send({status: 'error', message: 'An error has occurred'});
                 } else {
                     //console.log('Success: ' + JSON.stringify(result));
                     //console.log(result.ops);
@@ -17,14 +17,16 @@ module.exports = function(db) {
                     //var token = crypto.randomBytes(64).toString('hex');
                     //response = {token: };
 
+                    console.log(user);
                     if (!user) {
                         res.json({ status: 'error', message: 'Authentication failed. User not found.' });
                     } else if (user) {
+                        user.type = user.group;
                         const payload = {
                             id: user._id,
                             username: user.username,
                             //password: user.password,
-                            type: user.type
+                            type: user.group
                         };
                         /*var token = jwt.sign(payload, app.get('superSecret'), {
                             expiresInMinutes: 1440 // expires in 24 hours

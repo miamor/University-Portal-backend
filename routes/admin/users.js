@@ -1,52 +1,88 @@
-module.exports = function(db) {
+module.exports = function (db) {
     var module = {};
 
-    module.findById = function(req, res) {
+    module.findById = function (req, res) {
         var id = req.params.id;
         console.log('Retrieving user: ' + id);
-        db.collection('users', function(err, collection) {
-            collection.findOne({_id:ObjectID(id)}, function(err, item) {
+        db.collection('users', function (err, collection) {
+            collection.findOne({
+                _id: ObjectID(id)
+            }, function (err, item) {
                 console.log(item);
                 res.send(item);
             })
         });
     };
 
-    module.findAll = function(req, res) {
-        db.collection('users', function(err, collection) {
-            collection.find().toArray(function(err, items) {
+    module.findAll = function (req, res) {
+        console.log('hiu');
+        db.collection('users', function (err, collection) {
+            collection.find().toArray(function (err, items) {
+                console.log(items);
                 res.send(items);
             });
         });
     };
 
-    module.add = function(req, res) {
+    module.add = function (req, res) {
         var users = req.body;
 
         var dt = dateTime.create();
         users.created_time = users.updated_time = dt.format('Y-m-d H:M:S');
         console.log('Adding user: ' + JSON.stringify(users));
 
-        db.collection('users', function(err, collection) {
-            collection.insert(users, {safe:true}, function(err, result) {
+        db.collection('users', function (err, collection) {
+            collection.count({
+                link: users.username
+            }, function (err, num) {
                 if (err) {
-                    res.send({'error':'An error has occurred'});
+                    res.send({
+                        status: 'error',
+                        message: 'An error has occurred while checking username availability'
+                    });
                 } else {
-                    console.log('Success: ' + JSON.stringify(result));
-                    console.log(result.ops);
-                    res.send(result.ops[0]);
+                    console.log(num);
+
+                    if (num > 0) {
+                        res.send({
+                            status: 'error',
+                            message: "Username " + users.username + " is not available."
+                        });
+                    } else {
+                        collection.insert(users, {
+                            safe: true
+                        }, function (err, result) {
+                            if (err) {
+                                res.send({
+                                    status: 'error',
+                                    message: 'An error has occurred'
+                                });
+                            } else {
+                                console.log('Success: ' + JSON.stringify(result));
+                                console.log(result.ops);
+                                res.send({
+                                    status: 'success',
+                                    data: result.ops[0]
+                                });
+                            }
+                        });
+                    }
                 }
             });
         });
     }
 
-    module.update = function(req, res) {
+    module.update = function (req, res) {
         var id = req.params.id;
         var users = req.body;
         //delete users['_id'];
+        var dt = dateTime.create();
+        users.updated_time = dt.format('Y-m-d H:M:S');
 
-        db.collection('users', function(err, collection) {
-            collection.findOne({_id:ObjectID(id)}, function(err, oldUserData) {
+        db.collection('users', function (err, collection) {
+            collection.findOne({
+                _id: ObjectID(id)
+            }, function (err, oldUserData) {
 
                 //var oldUserData = module.findById(req, res);
                 //console.log(oldUserData);
@@ -59,30 +95,49 @@ module.exports = function(db) {
                 console.log(JSON.stringify(users));
 
                 //db.collection('users', function(err, collection) {
-                    collection.update({_id:ObjectID(id)}, users, {safe:true}, function(err, result) {
-                        if (err) {
-                            console.log('Error updating users: ' + err);
-                            res.send({'error':'An error has occurred'});
-                        } else {
-                            console.log('' + result + ' document(s) updated');
-                            res.send(users);
-                        }
-                    });
+                collection.update({
+                    _id: ObjectID(id)
+                }, users, {
+                    safe: true
+                }, function (err, result) {
+                    if (err) {
+                        console.log('Error updating users: ' + err);
+                        res.send({
+                            status: 'error',
+                            message: 'An error has occurred'
+                        });
+                    } else {
+                        console.log('' + result + ' document(s) updated');
+                        res.send({
+                            status: 'success',
+                            data: users
+                        });
+                    }
+                });
                 //});
             })
         });
     }
 
-    module.delete = function(req, res) {
+    module.delete = function (req, res) {
         var id = req.params.id;
         console.log('Deleting users: ' + id);
-        db.collection('users', function(err, collection) {
-            collection.remove({_id:ObjectID(id)}, {safe:true}, function(err, result) {
+        db.collection('users', function (err, collection) {
+            collection.remove({
+                _id: ObjectID(id)
+            }, {
+                safe: true
+            }, function (err, result) {
                 if (err) {
-                    res.send({'error':'An error has occurred - ' + err});
+                    res.send({
+                        status: 'error',
+                        message: 'An error has occurred - ' + err
+                    });
                 } else {
                     console.log('' + result + ' document(s) deleted');
-                    res.send(req.body);
+                    res.send({
+                        status: 'success'
+                    })
                 }
             });
         });

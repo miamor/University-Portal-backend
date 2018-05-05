@@ -50,6 +50,7 @@ function checkRole (roles) {
       next();
     } else {
       return res.status(403).send({
+        status: 'error',
         success: false,
         message: 'Insufficient permissions'
       });
@@ -70,16 +71,19 @@ app.use(function (err, req, res, next) {
   //console.log(req.headers);
   if (err.status === 403 || err.code === 'permission_denied') {
     return res.status(403).send({
+      status: 'error',
       success: false,
       message: 'Insufficient permissions'
     });
   } else if (err.status === 401) {
     return res.status(401).send({
+      status: 'error',
       success: false,
       message: err.message
     });
   } else if (err.status === 404) {
     return res.status(404).send({
+      status: 'error',
       success: false,
       message: 'No method.'
     });
@@ -109,6 +113,7 @@ db.open(function(err, db) {
           , admin_me_info = new ADMIN_ME_INFO(db);
         app.get('/admin/me', admin_me_info.getMyInfo);
         app.put('/admin/me/update', admin_me_info.update);
+        app.put('/admin/me/changepassword', admin_me_info.change_password);
 
         var ADMIN_SITE_INFO = require('./routes/admin/info')
           , admin_site_info = new ADMIN_SITE_INFO(db);
@@ -148,6 +153,18 @@ db.open(function(err, db) {
         app.post('/admin/users', admin_users.add);
         app.put('/admin/users/:id', admin_users.update);
         app.delete('/admin/users/:id', admin_users.delete);
+
+        var ADMIN_GROUPS = require('./routes/admin/groups')
+          , admin_groups = new ADMIN_GROUPS(db);
+        app.get('/admin/groups', admin_groups.findAll);
+        app.get('/admin/groups_getallusers', admin_groups.getAllUsers);
+        app.get('/admin/groups/:link', admin_groups.findByLink);
+        app.get('/admin/groups/:link/members', admin_groups.findGrMem);
+        app.post('/admin/groups/:link/members/add', admin_groups.addGrMem);
+        app.post('/admin/groups/:link/members/remove', admin_groups.removeGrMem);
+        app.post('/admin/groups', admin_groups.add);
+        app.put('/admin/groups/:link', admin_groups.update);
+        app.delete('/admin/groups/:link', admin_groups.delete);
 
         var ADMIN_CATS = require('./routes/admin/categories')
           , admin_categories = new ADMIN_CATS(db);
